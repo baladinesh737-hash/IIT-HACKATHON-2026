@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>DCA Login</title>
+
+<style>
+*{
+  box-sizing:border-box;
+  font-family:Arial, Helvetica, sans-serif;
+}
+
+html, body{
+  height:100%;
+  margin:0;
+}
+
+body{
+  background:linear-gradient(135deg,#bcb8b8,#8e0e0e);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+
+/* LOGIN CARD */
+.login-card{
+  background:white;
+  width:360px;
+  padding:35px;
+  border-radius:14px;
+  box-shadow:0 15px 40px rgba(0,0,0,0.35);
+  text-align:center;
+}
+
+.login-card h2{
+  margin-bottom:10px;
+  color:#c91515;
+}
+
+.login-card p{
+  font-size:14px;
+  color:#555;
+  margin-bottom:25px;
+}
+
+.login-card input{
+  width:100%;
+  padding:14px;
+  margin-bottom:15px;
+  border-radius:8px;
+  border:1px solid #ccc;
+  font-size:14px;
+}
+
+.login-card button{
+  width:100%;
+  padding:14px;
+  background:#867e7e;
+  color:white;
+  border:none;
+  border-radius:8px;
+  font-size:15px;
+  cursor:pointer;
+}
+
+.login-card button:hover{
+  background:#cd0606;
+}
+
+.error{
+  color:red;
+  font-size:13px;
+  margin-top:10px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="login-card">
+  <h2>DCA Login</h2>
+  <p>AI-Driven Debt Collection System</p>
+
+  <input id="username" placeholder="Username">
+  <input id="password" type="password" placeholder="Password">
+
+  <button onclick="loginUser()">Login</button>
+
+  <div class="error" id="error"></div>
+</div>
+
+<script>
+async function loginUser(){
+  const username = document.getElementById("username").value.trim();
+  const password = document.getElementById("password").value.trim();
+  const errorDiv = document.getElementById("error");
+
+  errorDiv.innerText = "";
+
+  try {
+    const response = await fetch("http://127.0.0.1:8000/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password })
+    });
+
+    const result = await response.json();
+
+    if(result.success){
+      localStorage.setItem("dca_logged_in","true");
+      window.location.href = "index.html";
+    } else {
+      errorDiv.innerText = " Invalid username or password";
+    }
+  } catch (err) {
+    errorDiv.innerText = " Backend not running";
+  }
+}
+</script>
+
+</body>
+</html>

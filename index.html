@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>AI-Driven DCA Management</title>
+
+<style>
+/* GLOBAL */
+* {
+  box-sizing: border-box;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
+/* BODY */
+body {
+  background: #f4f4f4;
+  display: flex;
+  flex-direction: column;
+}
+
+/* HEADER */
+.header {
+  background: #c91515;
+  color: white;
+  text-align: center;
+  padding: 25px;
+  position: relative;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 32px;
+}
+
+.header p {
+  margin-top: 8px;
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+/* LOGOUT BUTTON */
+.logout-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: #fff;
+  color: #c91515;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+/* MAIN CONTAINER */
+.container {
+  flex: 1;
+  padding: 30px;
+  max-width: 1200px;
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* AI OUTPUT */
+.ai-box {
+  background: #0e0e0e;
+  color: #00ff6a;
+  border-radius: 16px;
+  padding: 25px;
+  min-height: 180px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+  margin-bottom: 25px;
+  overflow-y: auto;
+}
+
+.ai-title {
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+/* PRIORITY BADGES */
+.badge {
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-weight: bold;
+  margin-bottom: 12px;
+}
+
+.badge.high {
+  background: #ff2d2d;
+  color: white;
+}
+
+.badge.medium {
+  background: #ff9800;
+  color: black;
+}
+
+.badge.low {
+  background: #4caf50;
+  color: white;
+}
+
+/* INPUT ROW */
+.input-row {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.input-row input {
+  flex: 1;
+  padding: 14px;
+  font-size: 15px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+/* BUTTONS */
+.btn {
+  padding: 14px 22px;
+  font-size: 14px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  color: white;
+}
+
+.btn-create {
+  background: #c91515;
+}
+
+.btn-ai {
+  background: #b30000;
+}
+
+.btn:hover {
+  opacity: 0.9;
+}
+
+/* TABLE */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+}
+
+th, td {
+  padding: 14px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+th {
+  background: #f1f1f1;
+}
+
+/* FOOTER */
+.footer {
+  text-align: center;
+  padding: 15px;
+  font-size: 13px;
+  color: #555;
+}
+</style>
+</head>
+
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <h1>AI-Driven DCA Management</h1>
+  <p>Smart Debt Collection Case Prioritization</p>
+  <button class="logout-btn" onclick="logout()">Logout</button>
+</div>
+
+<!-- MAIN -->
+<div class="container">
+
+  <!-- AI OUTPUT -->
+  <div class="ai-box" id="aiBox">
+    <div class="ai-title"> AI OUTPUT</div>
+    Waiting for AI action...
+  </div>
+
+  <!-- INPUTS -->
+  <div class="input-row">
+    <input type="text" id="customer" placeholder="Customer name">
+    <input type="number" id="amount" placeholder="Overdue amount ₹">
+    <button class="btn btn-create" onclick="createCase()">Create Case</button>
+    <button class="btn btn-ai" onclick="aiPrioritize()">AI Prioritize</button>
+  </div>
+
+  <!-- CASE TABLE -->
+  <table>
+    <thead>
+      <tr>
+        <th>Customer</th>
+        <th>Amount (₹)</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody id="caseTable"></tbody>
+  </table>
+
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  Local AI powered by Ollama • Privacy-First • IIT Hackathon Ready
+</div>
+
+<script>
+/* =========================
+   CONFIG
+========================= */
+const API_BASE = "http://127.0.0.1:8000";
+
+/* =========================
+   LOGIN PROTECTION
+========================= */
+if (localStorage.getItem("dca_logged_in") !== "true") {
+  window.location.href = "lock.html";
+}
+
+/* =========================
+   AI OUTPUT
+========================= */
+function showAI(msg) {
+  document.getElementById("aiBox").innerHTML =
+    `<div class="ai-title"> AI OUTPUT</div>${msg}`;
+}
+
+/* =========================
+   CREATE CASE
+========================= */
+function createCase() {
+  const customer = document.getElementById("customer").value.trim();
+  const amount = document.getElementById("amount").value.trim();
+
+  if (!customer || !amount) {
+    showAI(" Customer name or amount missing");
+    return;
+  }
+
+  fetch(`${API_BASE}/create_case`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ customer, amount: parseInt(amount) })
+  })
+  .then(res => res.json())
+  .then(() => {
+    showAI(" Case created successfully");
+    loadCases();
+  })
+  .catch(() => showAI(" Backend not responding"));
+}
+
+/* =========================
+   AI PRIORITIZE
+========================= */
+function aiPrioritize() {
+  const customer = document.getElementById("customer").value.trim();
+  const amount = document.getElementById("amount").value.trim();
+
+  if (!customer || !amount) {
+    showAI(" Customer name or amount missing");
+    return;
+  }
+
+  showAI(" AI analyzing case...");
+
+  fetch(`${API_BASE}/ai_prioritize`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ customer, amount: parseInt(amount) })
+  })
+  .then(res => res.json())
+  .then(data => {
+    let priority = data.priority || "LOW";
+    let reason = data.reason || data.result || "";
+
+    let cls = "low";
+    if (priority === "HIGH") cls = "high";
+    else if (priority === "MEDIUM") cls = "medium";
+
+    showAI(`
+      <div class="badge ${cls}">${priority}</div><br>
+      <b>Reason:</b><br>${reason}
+    `);
+  })
+  .catch(() => showAI("AI service error"));
+}
+
+/* =========================
+   LOAD CASES
+========================= */
+function loadCases() {
+  fetch(`${API_BASE}/cases`)
+    .then(res => res.json())
+    .then(data => {
+      const table = document.getElementById("caseTable");
+      table.innerHTML = "";
+      data.forEach(c => {
+        table.innerHTML += `
+          <tr>
+            <td>${c.customer}</td>
+            <td>₹${c.amount}</td>
+            <td>${c.status}</td>
+          </tr>`;
+      });
+    });
+}
+
+/* =========================
+   LOGOUT
+========================= */
+function logout() {
+  localStorage.removeItem("dca_logged_in");
+  window.location.href = "lock.html";
+}
+
+loadCases();
+</script>
+
+</body>
+</html>
